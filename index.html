@@ -260,10 +260,14 @@ function animStep(){
 }
 
 function applyStateRotation(){
-  const face=animAxis==='y'?(animLayer===1?0:1):animAxis==='x'?(animLayer===1?5:4):(animLayer===1?2:3);
-  const s=cubeState[face],ns=s.map(r=>[...r]);
-  for(let r=0;r<3;r++)for(let c=0;c<3;c++){if(animTarget>0)ns[c][2-r]=s[r][c];else ns[2-c][r]=s[r][c]}
-  cubeState[face]=ns;
+  const faceIdx=animAxis==='y'?(animLayer===1?0:1):animAxis==='x'?(animLayer===1?5:4):(animLayer===1?2:3);
+  const s=cubeState[faceIdx],ns=s.map(r=>[...r]);
+  const clockwise=animTarget>0;
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+    if(clockwise)ns[c][2-r]=s[r][c];
+    else ns[2-c][r]=s[r][c];
+  }
+  cubeState[faceIdx]=ns;
 }
 
 // 交互状态
