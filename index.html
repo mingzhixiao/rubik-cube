@@ -153,35 +153,25 @@ function applyAnimRot(v){
   return v;
 }
 
-// 简化的面检测：根据点击位置和魔方状态判断点击了哪个面
+// 简化的面检测：根据点击位置判断点击了哪个面
 function hitTest(sx,sy){
   // 将屏幕坐标转换为归一化坐标 (-1 到 1)
   const nx=(sx/W-0.5)*2;
   const ny=-(sy/H-0.5)*2;
   
-  // 应用相机旋转的逆变换
-  const cosY=Math.cos(-camRotY),sinY=Math.sin(-camRotY);
-  const cosX=Math.cos(-camRotX),sinX=Math.sin(-camRotX);
+  // 根据鼠标位置判断最可能点击的面
+  // 这是一个简化的检测，实际应该用射线检测
+  const absX=Math.abs(nx),absY=Math.abs(ny);
   
-  // 逆旋转
-  let x=nx*cosY-ny*sinY;
-  let y=nx*sinY+ny*cosX;
-  let z=1;
-  
-  // 根据魔方的朝向判断点击了哪个面
-  // 简化：根据鼠标位置判断最可能点击的面
-  const absX=Math.abs(x),absY=Math.abs(y);
-  
-  // 判断点击的是哪个面（基于投影位置）
+  // 根据魔方当前朝向判断
+  // 简化：根据鼠标位置判断
   if(absY>absX&&absY>0.3){
-    // 可能是 U 或 D 面
-    return y>0?'U':'D';
+    return ny>0?'U':'D';
   }else if(absX>0.3){
-    // 可能是 L 或 R 面
-    return x>0?'R':'L';
+    return nx>0?'R':'L';
   }else{
-    // 可能是 F 或 B 面
-    return z>0?'F':'B';
+    // 默认返回前面
+    return 'F';
   }
 }
 
@@ -193,21 +183,19 @@ function getRotation(face,startX,startY,endX,endY){
   if(dist<15)return null;
   
   // 根据面和拖动方向确定旋转
-  const absDx=Math.abs(dx),absDy=Math.abs(dy);
-  
   switch(face){
     case 'U':
     case 'D':
       // U/D 面：水平拖动旋转 y 轴
-      return{axis:'y',layer:face==='U'?1:-1,dir:dx>0?1:-1};
+      return{face:face,axis:'y',dir:dx>0?1:-1};
     case 'F':
     case 'B':
       // F/B 面：水平拖动旋转 z 轴
-      return{axis:'z',layer:face==='F'?1:-1,dir:dx>0?1:-1};
+      return{face:face,axis:'z',dir:dx>0?1:-1};
     case 'L':
     case 'R':
       // L/R 面：垂直拖动旋转 x 轴
-      return{axis:'x',layer:face==='R'?1:-1,dir:dy>0?1:-1};
+      return{face:face,axis:'x',dir:dy>0?1:-1};
   }
   return null;
 }
@@ -322,7 +310,7 @@ canvas.addEventListener('mouseup',e=>{
     if(dist>15){
       const rot=getRotation(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
       if(rot&&!animating){
-        rotateFace(rot.face||selectedFace,rot.dir);
+        rotateFace(rot.face,rot.dir);
         requestAnimationFrame(animStep);
       }
     }
@@ -374,7 +362,7 @@ canvas.addEventListener('touchmove',e=>{
     if(dist>15){
       const rot=getRotation(selectedFace,startPos.x,startPos.y,t.clientX,t.clientY);
       if(rot&&!animating){
-        rotateFace(selectedFace,rot.dir);
+        rotateFace(rot.face,rot.dir);
         requestAnimationFrame(animStep);
         isDragging=false;startPos=null;selectedFace=null;
       }
