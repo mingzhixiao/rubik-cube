@@ -11,26 +11,21 @@
 html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;color:#f0f0f0;user-select:none;-webkit-user-select:none}
 body{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);display:flex;flex-direction:column}
 
-/* Layout */
 .header{display:flex;justify-content:space-between;align-items:center;padding:env(safe-area-inset-top) 16px 10px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(26,26,46,0.8);z-index:20;border-bottom:1px solid rgba(255,255,255,0.1)}
 .canvas-wrap{flex:1;position:relative;overflow:hidden}
 canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 canvas:active{cursor:grabbing}
 .footer{display:flex;justify-content:center;gap:12px;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(26,26,46,0.8);z-index:20;border-top:1px solid rgba(255,255,255,0.1)}
 
-/* Stats */
 .stat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:8px 14px;font-size:15px;font-weight:500}
 .stat .val{font-variant-numeric:tabular-nums;min-width:32px;text-align:right;font-weight:600}
 
-/* Buttons */
 .btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 32px;border-radius:14px;cursor:pointer;font-size:15px;font-weight:600;letter-spacing:1px;transition:all .2s}
 .btn:active{transform:scale(0.95);background:rgba(255,255,255,0.15)}
 .btn.primary{background:linear-gradient(135deg,#e94560,#c23152);border-color:rgba(233,69,96,0.5);box-shadow:0 4px 16px rgba(233,69,96,0.3)}
 
-/* Hint */
 .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:12px;pointer-events:none;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
 
-/* Win */
 .win-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:100;padding:20px}
 .win-overlay.show{display:flex}
 .win-overlay .trophy{font-size:64px;margin-bottom:16px;animation:bounce 1s ease infinite}
@@ -38,13 +33,10 @@ canvas:active{cursor:grabbing}
 .win-overlay p{color:rgba(255,255,255,0.7);font-size:18px;margin-bottom:28px}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
-/* Particles */
 .particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .particle{position:absolute;width:4px;height:4px;background:rgba(233,69,96,0.3);border-radius:50%;animation:float linear infinite}
 @keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) scale(1);opacity:0}}
 
-/* === Responsive === */
-/* Phone portrait */
 @media(max-width:480px){
   .header{padding:env(safe-area-inset-top) 10px 6px}
   .stat{padding:6px 10px;font-size:13px;gap:6px;border-radius:10px}
@@ -55,7 +47,6 @@ canvas:active{cursor:grabbing}
   .win-overlay p{font-size:14px}
   .trophy{font-size:48px!important}
 }
-/* Phone landscape */
 @media(max-height:500px){
   .header{padding:4px 10px 4px}
   .stat{padding:4px 8px;font-size:12px}
@@ -63,12 +54,10 @@ canvas:active{cursor:grabbing}
   .btn{padding:8px 0;font-size:13px}
   .hint{display:none}
 }
-/* Tablet */
 @media(min-width:481px) and (max-width:1024px){
   .btn{padding:14px 40px;font-size:16px}
   .stat{padding:8px 16px;font-size:15px}
 }
-/* Desktop */
 @media(min-width:1025px){
   .btn{padding:14px 48px;font-size:16px}
   .stat{padding:10px 18px;font-size:15px}
@@ -85,7 +74,7 @@ canvas:active{cursor:grabbing}
 
 <div class="canvas-wrap">
   <canvas id="c"></canvas>
-  <div class="hint">拖拽旋转 · 滚轮缩放 · 键盘UDFBLR转面</div>
+  <div class="hint">拖拽旋转面 · 右键/双指旋转视角</div>
 </div>
 
 <div class="footer">
@@ -101,10 +90,8 @@ canvas:active{cursor:grabbing}
 </div>
 
 <script>
-// Particles
 (function(){const c=document.getElementById('particles');for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.animationDuration=(8+Math.random()*12)+'s';p.style.animationDelay=(-Math.random()*20)+'s';p.style.width=p.style.height=(2+Math.random()*3)+'px';c.appendChild(p)}})();
 
-// 3D Engine
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 let W,H,dpr;
 
@@ -122,17 +109,24 @@ window.addEventListener('resize',resize);
 
 const PI=Math.PI;
 function vec3(x,y,z){return{x,y,z}}
+function add(a,b){return{x:a.x+b.x,y:a.y+b.y,z:a.z+b.z}}
+function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}
+function scale(v,s){return{x:v.x*s,y:v.y*s,z:v.z*s}}
+function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}
+function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}
+function len(v){return Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z)}
+function normalize(v){const l=len(v);return l>0?scale(v,1/l):{x:0,y:0,z:0}}
+
 function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x,v.y*c-v.z*s,v.y*s+v.z*c)}
 function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x*c+v.z*s,v.y,-v.x*s+v.z*c)}
 function rotZ(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x*c-v.y*s,v.x*s+v.y*c,v.z)}
 
 function project(v){
   const d=8,z=v.z+d,scale=d/z*Math.min(W,H)*0.22;
-  return{x:W/2+v.x*scale,y:H/2-v.y*scale,z:v.z}
+  return{x:W/2+v.x*scale,y:H/2-v.y*scale,z:v.z,scale:scale}
 }
 
 const colorMap=['#ffffff','#ffd500','#ff2d55','#ff9500','#34c759','#007aff'];
-const colorNames=['白','黄','红','橙','绿','蓝'];
 let cubeState=[],moveCount=0,startTime=null,timerInterval=null;
 let animating=false,animAxis='',animLayer=0,animAngle=0,animTarget=0;
 let camRotX=-0.3,camRotY=0.5;
@@ -169,10 +163,166 @@ function applyAnimRot(v){
   return v;
 }
 
+// 获取面的法向量（世界坐标）
+function getFaceNormal(face){
+  switch(face){
+    case 'U':return{x:0,y:1,z:0};
+    case 'D':return{x:0,y:-1,z:0};
+    case 'F':return{x:0,y:0,z:1};
+    case 'B':return{x:0,y:0,z:-1};
+    case 'L':return{x:-1,y:0,z:0};
+    case 'R':return{x:1,y:0,z:0};
+  }
+}
+
+// 获取面的两个切向量
+function getFaceTangents(face){
+  switch(face){
+    case 'U':return[{x:1,y:0,z:0},{x:0,y:0,z:1}];
+    case 'D':return[{x:1,y:0,z:0},{x:0,y:0,z:-1}];
+    case 'F':return[{x:1,y:0,z:0},{x:0,y:1,z:0}];
+    case 'B':return[{x:-1,y:0,z:0},{x:0,y:1,z:0}];
+    case 'L':return[{x:0,y:0,z:1},{x:0,y:1,z:0}];
+    case 'R':return[{x:0,y:0,z:-1},{x:0,y:1,z:0}];
+  }
+}
+
+// 射线与面片相交检测
+function rayIntersectFace(rayOrigin,rayDir,verts){
+  // 计算面的法向量
+  const v0=verts[0],v1=verts[1],v2=verts[2];
+  const edge1=sub(v1,v0),edge2=sub(v2,v0);
+  const normal=cross(edge1,edge2);
+  const nlen=len(normal);
+  if(nlen<0.001)return null;
+  const n=scale(normal,1/nlen);
+  
+  // 射线与平面相交
+  const denom=dot(rayDir,n);
+  if(Math.abs(denom)<0.0001)return null;
+  
+  const t=dot(sub(v0,rayDir),n)/denom;
+  if(t<0)return null;
+  
+  const hit=add(rayDir,scale(rayDir,t));
+  
+  // 检查点是否在四边形内（使用重心坐标）
+  const v0v1=sub(v1,v0),v0v2=sub(v2,v0),v0p=sub(hit,v0);
+  const d00=dot(v0v1,v0v1),d01=dot(v0v1,v0v2),d11=dot(v0v2,v0v2);
+  const d20=dot(v0p,v0v1),d21=dot(v0p,v0v2);
+  const denom2=d00*d11-d01*d01;
+  if(Math.abs(denom2)<0.0001)return null;
+  
+  const v=(d11*d20-d01*d21)/denom2;
+  const w=(d00*d21-d01*d20)/denom2;
+  const u=1-v-w;
+  
+  if(u>=0&&v>=0&&w>=0&&u<=1&&v<=1&&w<=1){
+    return{t,point:hit,normal:n};
+  }
+  return null;
+}
+
+// 屏幕坐标转射线
+function screenToRay(sx,sy){
+  // 简单的正交投影近似
+  const aspect=W/H;
+  const fov=0.5;
+  const x=(sx/W-0.5)*2*fov*aspect;
+  const y=-(sy/H-0.5)*2*fov;
+  const dir=normalize({x,y,z:1});
+  // 应用相机旋转
+  const rotatedDir=applyRot(dir);
+  return{origin:{x:0,y:0,z:0},dir:rotatedDir};
+}
+
+// 检测点击了哪个面
+let selectedFace=null,selectedVerts=null,dragStart=null,dragFaceNormal=null,dragT1=null,dragT2=null;
+
+function hitTest(sx,sy){
+  const ray=screenToRay(sx,sy);
+  let bestT=Infinity,bestFace=null,bestVerts=null;
+  
+  cubies.forEach(cu=>{
+    cu.faces.forEach(f=>{
+      const worldVerts=f.v.map(v=>applyRot(animating?applyAnimRot(v):v));
+      const hit=rayIntersectFace(ray.origin,ray.dir,worldVerts);
+      if(hit&&hit.t<bestT){
+        bestT=hit.t;
+        bestFace=f;
+        bestVerts=worldVerts;
+      }
+    });
+  });
+  
+  return bestFace?{face:bestFace,verts:bestVerts,t:bestT}:null;
+}
+
+// 根据拖动方向确定旋转轴和方向
+function getRotationFromDrag(face,startX,startY,endX,endY){
+  const dx=endX-startX;
+  const dy=endY-startY;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist<10)return null;
+  
+  const faceName=face.face;
+  const tangents=getFaceTangents(faceName);
+  
+  // 将拖动方向投影到面的切空间
+  const dragDir=normalize({x:dx,y:dy,z:0});
+  
+  // 计算两个切向量在屏幕上的投影
+  const t1Screen=tangents[0];
+  const t2Screen=tangents[1];
+  
+  // 选择与拖动方向最匹配的切向量
+  const d1=Math.abs(dragDir.x*t1Screen.x+dragDir.y*t1Screen.y);
+  const d2=Math.abs(dragDir.x*t2Screen.x+dragDir.y*t2Screen.y);
+  
+  const chosenTangent=d1>d2?tangents[0]:tangents[1];
+  const layer=faceName==='U'||faceName==='D'?1:faceName==='F'||faceName==='B'?1:1;
+  
+  // 根据面和切向量确定旋转轴
+  let axis,layerVal;
+  if(faceName==='U'||faceName==='D'){
+    axis='y';
+    layerVal=faceName==='U'?1:-1;
+  }else if(faceName==='F'||faceName==='B'){
+    axis='z';
+    layerVal=faceName==='F'?1:-1;
+  }else{
+    axis='x';
+    layerVal=faceName==='R'?1:-1;
+  }
+  
+  // 根据拖动方向确定旋转方向
+  let dir=1;
+  if(axis==='y'){
+    if(Math.abs(chosenTangent.x)>Math.abs(chosenTangent.z)){
+      dir=dx>0?1:-1;
+    }else{
+      dir=dy>0?1:-1;
+    }
+  }else if(axis==='z'){
+    if(Math.abs(chosenTangent.x)>Math.abs(chosenTangent.y)){
+      dir=dx>0?1:-1;
+    }else{
+      dir=dy>0?1:-1;
+    }
+  }else{
+    if(Math.abs(chosenTangent.z)>Math.abs(chosenTangent.y)){
+      dir=dx>0?1:-1;
+    }else{
+      dir=dy>0?1:-1;
+    }
+  }
+  
+  return{axis,layer:layerVal,dir};
+}
+
 function draw(){
   ctx.clearRect(0,0,W,H);
   
-  // 背景渐变
   const grd=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.7);
   grd.addColorStop(0,'rgba(233,69,96,0.08)');grd.addColorStop(0.5,'rgba(0,0,0,0)');grd.addColorStop(1,'rgba(0,0,0,0.2)');
   ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
@@ -180,45 +330,42 @@ function draw(){
   const faces=[];
   cubies.forEach(cu=>cu.faces.forEach(f=>{
     const verts=f.v.map(v=>project(applyRot(animating?applyAnimRot(v):v)));
-    faces.push({verts,color:getColor(f.face,f.row,f.col),z:verts.reduce((s,v)=>s+v.z,0)/4});
+    faces.push({verts,color:getColor(f.face,f.row,f.col),z:verts.reduce((s,v)=>s+v.z,0)/4,face:f});
   }));
   faces.sort((a,b)=>b.z-a.z);
 
-  faces.forEach(({verts,color})=>{
+  faces.forEach(({verts,color,face})=>{
     ctx.save();
     
-    // 阴影
     ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
     
-    // 主体
     ctx.beginPath();ctx.moveTo(verts[0].x,verts[0].y);for(let i=1;i<4;i++)ctx.lineTo(verts[i].x,verts[i].y);ctx.closePath();
     const mx=(verts[0].x+verts[2].x)/2,my=(verts[0].y+verts[2].y)/2;
     const g=ctx.createLinearGradient(mx-15,my-15,mx+15,my+15);
     g.addColorStop(0,lighten(color,25));g.addColorStop(0.4,color);g.addColorStop(1,darken(color,15));
     ctx.fillStyle=g;ctx.fill();
     
-    // 边框
     ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=1.5;ctx.stroke();
-    
     ctx.shadowColor='transparent';
     
-    // 贴纸
     const cx=(verts[0].x+verts[2].x)/2,cy=(verts[0].y+verts[2].y)/2,sh=0.75;
     const iv=verts.map(v=>({x:cx+(v.x-cx)*sh,y:cy+(v.y-cy)*sh}));
     ctx.beginPath();ctx.moveTo(iv[0].x,iv[0].y);for(let i=1;i<4;i++)ctx.lineTo(iv[i].x,iv[i].y);ctx.closePath();
     
-    // 贴纸渐变
     const sg=ctx.createLinearGradient((iv[0].x+iv[1].x)/2,(iv[0].y+iv[1].y)/2,(iv[2].x+iv[3].x)/2,(iv[2].y+iv[3].y)/2);
     sg.addColorStop(0,lighten(color,18));sg.addColorStop(0.5,color);sg.addColorStop(1,darken(color,8));
     ctx.fillStyle=sg;ctx.fill();
     
-    // 贴纸高光
     const gl=ctx.createLinearGradient((iv[0].x+iv[1].x)/2,(iv[0].y+iv[1].y)/2,(iv[2].x+iv[3].x)/2,(iv[2].y+iv[3].y)/2);
     gl.addColorStop(0,'rgba(255,255,255,0.25)');gl.addColorStop(0.4,'rgba(255,255,255,0.05)');gl.addColorStop(1,'rgba(0,0,0,0.1)');
     ctx.fillStyle=gl;ctx.fill();
     
-    // 贴纸边框
     ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=0.8;ctx.stroke();
+    
+    // 高亮选中的面
+    if(selectedFace&&selectedFace.face===face.face&&selectedFace.row===face.row&&selectedFace.col===face.col){
+      ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=3;ctx.stroke();
+    }
     
     ctx.restore();
   });
@@ -245,29 +392,143 @@ function applyStateRotation(){
   cubeState[face]=ns;
 }
 
-// Mouse
-let dragging=false,lastM={x:0,y:0};
-canvas.addEventListener('mousedown',e=>{dragging=true;lastM={x:e.clientX,y:e.clientY}});
-canvas.addEventListener('mousemove',e=>{if(!dragging)return;camRotY+=(e.clientX-lastM.x)*0.006;camRotX+=(e.clientY-lastM.y)*0.006;camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));lastM={x:e.clientX,y:e.clientY};draw()});
-canvas.addEventListener('mouseup',()=>dragging=false);
-canvas.addEventListener('mouseleave',()=>dragging=false);
-canvas.addEventListener('wheel',e=>{camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));draw();e.preventDefault()},{passive:false});
+// 鼠标/触摸交互
+let isDragging=false,dragType=null,startPos=null,lastPos=null;
+let rightButton=false;
 
-// Touch
-let lastT=null;
-canvas.addEventListener('touchstart',e=>{if(e.touches.length===1)lastT={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
-canvas.addEventListener('touchmove',e=>{
-  if(e.touches.length===1&&lastT){
-    camRotY+=(e.touches[0].clientX-lastT.x)*0.006;
-    camRotX+=(e.touches[0].clientY-lastT.y)*0.006;
-    camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
-    lastT={x:e.touches[0].clientX,y:e.touches[0].clientY};draw();
-  }
+canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
-},{passive:false});
-canvas.addEventListener('touchend',()=>lastT=null);
+  if(e.button===2||e.button===1){rightButton=true;dragType='camera';startPos={x:e.clientX,y:e.clientY};lastPos={x:e.clientX,y:e.clientY};return}
+  
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+  
+  const hit=hitTest(x,y);
+  if(hit){
+    dragType='face';
+    startPos={x:e.clientX,y:e.clientY};
+    lastPos={x:e.clientX,y:e.clientY};
+    selectedFace=hit.face;
+    dragStart={x:x,y:y};
+  }else{
+    dragType='camera';
+    startPos={x:e.clientX,y:e.clientY};
+    lastPos={x:e.clientX,y:e.clientY};
+  }
+  draw();
+});
 
-// Keyboard
+canvas.addEventListener('mousemove',e=>{
+  if(!dragType)return;
+  e.preventDefault();
+  
+  if(dragType==='camera'){
+    camRotY+=(e.clientX-lastPos.x)*0.006;
+    camRotX+=(e.clientY-lastPos.y)*0.006;
+    camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
+  }
+  lastPos={x:e.clientX,y:e.clientY};
+  draw();
+});
+
+canvas.addEventListener('mouseup',e=>{
+  e.preventDefault();
+  if(dragType==='face'&&startPos){
+    const dx=e.clientX-startPos.x;
+    const dy=e.clientY-startPos.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    
+    if(dist>20&&selectedFace){
+      const rot=getRotationFromDrag(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
+      if(rot&&!animating){
+        rotateFace(rot.face,rot.dir);
+        requestAnimationFrame(animStep);
+      }
+    }
+  }
+  dragType=null;startPos=null;selectedFace=null;rightButton=false;
+  draw();
+});
+
+canvas.addEventListener('mouseleave',()=>{dragType=null;startPos=null;selectedFace=null;rightButton=false;draw()});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+// 触摸支持
+let lastT=null,touchCount=0;
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  touchCount=e.touches.length;
+  if(touchCount===1){
+    const t=e.touches[0];
+    const rect=canvas.getBoundingClientRect();
+    const x=t.clientX-rect.left;
+    const y=t.clientY-rect.top;
+    
+    const hit=hitTest(x,y);
+    if(hit){
+      dragType='face';
+      startPos={x:t.clientX,y:t.clientY};
+      lastPos={x:t.clientX,y:t.clientY};
+      selectedFace=hit.face;
+    }else{
+      dragType='camera';
+      startPos={x:t.clientX,y:t.clientY};
+      lastPos={x:t.clientX,y:t.clientY};
+    }
+  }else if(touchCount===2){
+    dragType='camera';
+    const t1=e.touches[0],t2=e.touches[1];
+    startPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
+    lastPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
+  }
+  draw();
+},{passive:false});
+
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!dragType)return;
+  
+  if(touchCount===1&&dragType==='face'&&startPos){
+    const t=e.touches[0];
+    const dx=t.clientX-startPos.x;
+    const dy=t.clientY-startPos.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    
+    if(dist>20&&selectedFace){
+      const rot=getRotationFromDrag(selectedFace,startPos.x,startPos.y,t.clientX,t.clientY);
+      if(rot&&!animating){
+        rotateFace(rot.face,rot.dir);
+        requestAnimationFrame(animStep);
+        dragType=null;startPos=null;selectedFace=null;
+      }
+    }
+  }else if(dragType==='camera'){
+    let cx,cy;
+    if(touchCount===1){
+      cx=e.touches[0].clientX;cy=e.touches[0].clientY;
+    }else{
+      const t1=e.touches[0],t2=e.touches[1];
+      cx=(t1.clientX+t2.clientX)/2;cy=(t1.clientY+t2.clientY)/2;
+    }
+    camRotY+=(cx-lastPos.x)*0.006;
+    camRotX+=(cy-lastPos.y)*0.006;
+    camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
+    lastPos={x:cx,y:cy};
+  }
+  draw();
+},{passive:false});
+
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(dragType==='face'&&startPos&&selectedFace){
+    // 已经在touchmove中处理了
+  }
+  dragType=null;startPos=null;selectedFace=null;touchCount=0;
+  draw();
+},{passive:false});
+
+// 键盘
 document.addEventListener('keydown',e=>{const k=e.key.toUpperCase(),d=e.shiftKey?-1:1;if('UDFBLR'.includes(k)){rotateFace(k,d);requestAnimationFrame(animStep)}});
 
 function scrambleCube(){
