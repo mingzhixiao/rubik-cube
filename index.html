@@ -74,7 +74,7 @@ canvas:active{cursor:grabbing}
 
 <div class="canvas-wrap">
   <canvas id="c"></canvas>
-  <div class="hint">拖拽旋转面 · 右键/双指旋转视角</div>
+  <div class="hint">拖拽旋转面 · 双指旋转视角</div>
 </div>
 
 <div class="footer">
@@ -109,17 +109,8 @@ window.addEventListener('resize',resize);
 
 const PI=Math.PI;
 function vec3(x,y,z){return{x,y,z}}
-function add(a,b){return{x:a.x+b.x,y:a.y+b.y,z:a.z+b.z}}
-function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}
-function scale(v,s){return{x:v.x*s,y:v.y*s,z:v.z*s}}
-function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}
-function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}
-function len(v){return Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z)}
-function normalize(v){const l=len(v);return l>0?scale(v,1/l):{x:0,y:0,z:0}}
-
 function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x,v.y*c-v.z*s,v.y*s+v.z*c)}
 function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x*c+v.z*s,v.y,-v.x*s+v.z*c)}
-function rotZ(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x*c-v.y*s,v.x*s+v.y*c,v.z)}
 
 function project(v){
   const d=8,z=v.z+d,scale=d/z*Math.min(W,H)*0.22;
@@ -159,165 +150,66 @@ function darken(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16)
 function applyAnimRot(v){
   if(animAxis==='x'&&v.x===animLayer)return rotX(v,animAngle);
   if(animAxis==='y'&&v.y===animLayer)return rotY(v,animAngle);
-  if(animAxis==='z'&&v.z===animLayer)return rotZ(v,animAngle);
   return v;
 }
 
-// 获取面的法向量（世界坐标）
-function getFaceNormal(face){
-  switch(face){
-    case 'U':return{x:0,y:1,z:0};
-    case 'D':return{x:0,y:-1,z:0};
-    case 'F':return{x:0,y:0,z:1};
-    case 'B':return{x:0,y:0,z:-1};
-    case 'L':return{x:-1,y:0,z:0};
-    case 'R':return{x:1,y:0,z:0};
-  }
-}
-
-// 获取面的两个切向量
-function getFaceTangents(face){
-  switch(face){
-    case 'U':return[{x:1,y:0,z:0},{x:0,y:0,z:1}];
-    case 'D':return[{x:1,y:0,z:0},{x:0,y:0,z:-1}];
-    case 'F':return[{x:1,y:0,z:0},{x:0,y:1,z:0}];
-    case 'B':return[{x:-1,y:0,z:0},{x:0,y:1,z:0}];
-    case 'L':return[{x:0,y:0,z:1},{x:0,y:1,z:0}];
-    case 'R':return[{x:0,y:0,z:-1},{x:0,y:1,z:0}];
-  }
-}
-
-// 射线与面片相交检测
-function rayIntersectFace(rayOrigin,rayDir,verts){
-  // 计算面的法向量
-  const v0=verts[0],v1=verts[1],v2=verts[2];
-  const edge1=sub(v1,v0),edge2=sub(v2,v0);
-  const normal=cross(edge1,edge2);
-  const nlen=len(normal);
-  if(nlen<0.001)return null;
-  const n=scale(normal,1/nlen);
-  
-  // 射线与平面相交
-  const denom=dot(rayDir,n);
-  if(Math.abs(denom)<0.0001)return null;
-  
-  const t=dot(sub(v0,rayDir),n)/denom;
-  if(t<0)return null;
-  
-  const hit=add(rayDir,scale(rayDir,t));
-  
-  // 检查点是否在四边形内（使用重心坐标）
-  const v0v1=sub(v1,v0),v0v2=sub(v2,v0),v0p=sub(hit,v0);
-  const d00=dot(v0v1,v0v1),d01=dot(v0v1,v0v2),d11=dot(v0v2,v0v2);
-  const d20=dot(v0p,v0v1),d21=dot(v0p,v0v2);
-  const denom2=d00*d11-d01*d01;
-  if(Math.abs(denom2)<0.0001)return null;
-  
-  const v=(d11*d20-d01*d21)/denom2;
-  const w=(d00*d21-d01*d20)/denom2;
-  const u=1-v-w;
-  
-  if(u>=0&&v>=0&&w>=0&&u<=1&&v<=1&&w<=1){
-    return{t,point:hit,normal:n};
-  }
-  return null;
-}
-
-// 屏幕坐标转射线
-function screenToRay(sx,sy){
-  // 简单的正交投影近似
-  const aspect=W/H;
-  const fov=0.5;
-  const x=(sx/W-0.5)*2*fov*aspect;
-  const y=-(sy/H-0.5)*2*fov;
-  const dir=normalize({x,y,z:1});
-  // 应用相机旋转
-  const rotatedDir=applyRot(dir);
-  return{origin:{x:0,y:0,z:0},dir:rotatedDir};
-}
-
-// 检测点击了哪个面
-let selectedFace=null,selectedVerts=null,dragStart=null,dragFaceNormal=null,dragT1=null,dragT2=null;
-
+// 简化的面检测：根据点击位置和魔方状态判断点击了哪个面
 function hitTest(sx,sy){
-  const ray=screenToRay(sx,sy);
-  let bestT=Infinity,bestFace=null,bestVerts=null;
+  // 将屏幕坐标转换为归一化坐标 (-1 到 1)
+  const nx=(sx/W-0.5)*2;
+  const ny=-(sy/H-0.5)*2;
   
-  cubies.forEach(cu=>{
-    cu.faces.forEach(f=>{
-      const worldVerts=f.v.map(v=>applyRot(animating?applyAnimRot(v):v));
-      const hit=rayIntersectFace(ray.origin,ray.dir,worldVerts);
-      if(hit&&hit.t<bestT){
-        bestT=hit.t;
-        bestFace=f;
-        bestVerts=worldVerts;
-      }
-    });
-  });
+  // 应用相机旋转的逆变换
+  const cosY=Math.cos(-camRotY),sinY=Math.sin(-camRotY);
+  const cosX=Math.cos(-camRotX),sinX=Math.sin(-camRotX);
   
-  return bestFace?{face:bestFace,verts:bestVerts,t:bestT}:null;
+  // 逆旋转
+  let x=nx*cosY-ny*sinY;
+  let y=nx*sinY+ny*cosX;
+  let z=1;
+  
+  // 根据魔方的朝向判断点击了哪个面
+  // 简化：根据鼠标位置判断最可能点击的面
+  const absX=Math.abs(x),absY=Math.abs(y);
+  
+  // 判断点击的是哪个面（基于投影位置）
+  if(absY>absX&&absY>0.3){
+    // 可能是 U 或 D 面
+    return y>0?'U':'D';
+  }else if(absX>0.3){
+    // 可能是 L 或 R 面
+    return x>0?'R':'L';
+  }else{
+    // 可能是 F 或 B 面
+    return z>0?'F':'B';
+  }
 }
 
-// 根据拖动方向确定旋转轴和方向
-function getRotationFromDrag(face,startX,startY,endX,endY){
+// 根据拖动方向和起始面确定旋转
+function getRotation(face,startX,startY,endX,endY){
   const dx=endX-startX;
   const dy=endY-startY;
   const dist=Math.sqrt(dx*dx+dy*dy);
-  if(dist<10)return null;
+  if(dist<15)return null;
   
-  const faceName=face.face;
-  const tangents=getFaceTangents(faceName);
+  // 根据面和拖动方向确定旋转
+  const absDx=Math.abs(dx),absDy=Math.abs(dy);
   
-  // 将拖动方向投影到面的切空间
-  const dragDir=normalize({x:dx,y:dy,z:0});
-  
-  // 计算两个切向量在屏幕上的投影
-  const t1Screen=tangents[0];
-  const t2Screen=tangents[1];
-  
-  // 选择与拖动方向最匹配的切向量
-  const d1=Math.abs(dragDir.x*t1Screen.x+dragDir.y*t1Screen.y);
-  const d2=Math.abs(dragDir.x*t2Screen.x+dragDir.y*t2Screen.y);
-  
-  const chosenTangent=d1>d2?tangents[0]:tangents[1];
-  const layer=faceName==='U'||faceName==='D'?1:faceName==='F'||faceName==='B'?1:1;
-  
-  // 根据面和切向量确定旋转轴
-  let axis,layerVal;
-  if(faceName==='U'||faceName==='D'){
-    axis='y';
-    layerVal=faceName==='U'?1:-1;
-  }else if(faceName==='F'||faceName==='B'){
-    axis='z';
-    layerVal=faceName==='F'?1:-1;
-  }else{
-    axis='x';
-    layerVal=faceName==='R'?1:-1;
+  switch(face){
+    case 'U':
+    case 'D':
+      // U/D 面：水平拖动旋转 y 轴
+      return{axis:'y',layer:face==='U'?1:-1,dir:dx>0?1:-1};
+    case 'F':
+    case 'B':
+      // F/B 面：水平拖动旋转 z 轴
+      return{axis:'z',layer:face==='F'?1:-1,dir:dx>0?1:-1};
+    case 'L':
+    case 'R':
+      // L/R 面：垂直拖动旋转 x 轴
+      return{axis:'x',layer:face==='R'?1:-1,dir:dy>0?1:-1};
   }
-  
-  // 根据拖动方向确定旋转方向
-  let dir=1;
-  if(axis==='y'){
-    if(Math.abs(chosenTangent.x)>Math.abs(chosenTangent.z)){
-      dir=dx>0?1:-1;
-    }else{
-      dir=dy>0?1:-1;
-    }
-  }else if(axis==='z'){
-    if(Math.abs(chosenTangent.x)>Math.abs(chosenTangent.y)){
-      dir=dx>0?1:-1;
-    }else{
-      dir=dy>0?1:-1;
-    }
-  }else{
-    if(Math.abs(chosenTangent.z)>Math.abs(chosenTangent.y)){
-      dir=dx>0?1:-1;
-    }else{
-      dir=dy>0?1:-1;
-    }
-  }
-  
-  return{axis,layer:layerVal,dir};
+  return null;
 }
 
 function draw(){
@@ -330,11 +222,11 @@ function draw(){
   const faces=[];
   cubies.forEach(cu=>cu.faces.forEach(f=>{
     const verts=f.v.map(v=>project(applyRot(animating?applyAnimRot(v):v)));
-    faces.push({verts,color:getColor(f.face,f.row,f.col),z:verts.reduce((s,v)=>s+v.z,0)/4,face:f});
+    faces.push({verts,color:getColor(f.face,f.row,f.col),z:verts.reduce((s,v)=>s+v.z,0)/4});
   }));
   faces.sort((a,b)=>b.z-a.z);
 
-  faces.forEach(({verts,color,face})=>{
+  faces.forEach(({verts,color})=>{
     ctx.save();
     
     ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
@@ -361,12 +253,6 @@ function draw(){
     ctx.fillStyle=gl;ctx.fill();
     
     ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=0.8;ctx.stroke();
-    
-    // 高亮选中的面
-    if(selectedFace&&selectedFace.face===face.face&&selectedFace.row===face.row&&selectedFace.col===face.col){
-      ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=3;ctx.stroke();
-    }
-    
     ctx.restore();
   });
 }
@@ -392,37 +278,32 @@ function applyStateRotation(){
   cubeState[face]=ns;
 }
 
-// 鼠标/触摸交互
+// 交互状态
 let isDragging=false,dragType=null,startPos=null,lastPos=null;
-let rightButton=false;
+let selectedFace=null;
 
+// 鼠标事件
 canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
-  if(e.button===2||e.button===1){rightButton=true;dragType='camera';startPos={x:e.clientX,y:e.clientY};lastPos={x:e.clientX,y:e.clientY};return}
+  if(e.button!==0)return; // 只响应左键
   
   const rect=canvas.getBoundingClientRect();
   const x=e.clientX-rect.left;
   const y=e.clientY-rect.top;
   
-  const hit=hitTest(x,y);
-  if(hit){
-    dragType='face';
-    startPos={x:e.clientX,y:e.clientY};
-    lastPos={x:e.clientX,y:e.clientY};
-    selectedFace=hit.face;
-    dragStart={x:x,y:y};
-  }else{
-    dragType='camera';
-    startPos={x:e.clientX,y:e.clientY};
-    lastPos={x:e.clientX,y:e.clientY};
-  }
-  draw();
+  // 检测点击了哪个面
+  selectedFace=hitTest(x,y);
+  isDragging=true;
+  dragType='rotate';
+  startPos={x:e.clientX,y:e.clientY};
+  lastPos={x:e.clientX,y:e.clientY};
 });
 
 canvas.addEventListener('mousemove',e=>{
-  if(!dragType)return;
+  if(!isDragging)return;
   e.preventDefault();
   
+  // 如果是双指触摸，旋转视角
   if(dragType==='camera'){
     camRotY+=(e.clientX-lastPos.x)*0.006;
     camRotX+=(e.clientY-lastPos.y)*0.006;
@@ -433,50 +314,45 @@ canvas.addEventListener('mousemove',e=>{
 });
 
 canvas.addEventListener('mouseup',e=>{
-  e.preventDefault();
-  if(dragType==='face'&&startPos){
+  if(isDragging&&dragType==='rotate'&&startPos&&selectedFace){
     const dx=e.clientX-startPos.x;
     const dy=e.clientY-startPos.y;
     const dist=Math.sqrt(dx*dx+dy*dy);
     
-    if(dist>20&&selectedFace){
-      const rot=getRotationFromDrag(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
+    if(dist>15){
+      const rot=getRotation(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
       if(rot&&!animating){
-        rotateFace(rot.face,rot.dir);
+        rotateFace(rot.face||selectedFace,rot.dir);
         requestAnimationFrame(animStep);
       }
     }
   }
-  dragType=null;startPos=null;selectedFace=null;rightButton=false;
+  isDragging=false;dragType=null;startPos=null;selectedFace=null;
   draw();
 });
 
-canvas.addEventListener('mouseleave',()=>{dragType=null;startPos=null;selectedFace=null;rightButton=false;draw()});
-canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('mouseleave',()=>{isDragging=false;dragType=null;startPos=null;selectedFace=null;draw()});
 
-// 触摸支持
-let lastT=null,touchCount=0;
+// 触摸事件
+let touchCount=0,lastTouches=null;
 canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   touchCount=e.touches.length;
+  
   if(touchCount===1){
     const t=e.touches[0];
     const rect=canvas.getBoundingClientRect();
     const x=t.clientX-rect.left;
     const y=t.clientY-rect.top;
     
-    const hit=hitTest(x,y);
-    if(hit){
-      dragType='face';
-      startPos={x:t.clientX,y:t.clientY};
-      lastPos={x:t.clientX,y:t.clientY};
-      selectedFace=hit.face;
-    }else{
-      dragType='camera';
-      startPos={x:t.clientX,y:t.clientY};
-      lastPos={x:t.clientX,y:t.clientY};
-    }
+    selectedFace=hitTest(x,y);
+    isDragging=true;
+    dragType='rotate';
+    startPos={x:t.clientX,y:t.clientY};
+    lastPos={x:t.clientX,y:t.clientY};
   }else if(touchCount===2){
+    // 双指开始：准备旋转视角
+    isDragging=true;
     dragType='camera';
     const t1=e.touches[0],t2=e.touches[1];
     startPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
@@ -487,30 +363,27 @@ canvas.addEventListener('touchstart',e=>{
 
 canvas.addEventListener('touchmove',e=>{
   e.preventDefault();
-  if(!dragType)return;
+  if(!isDragging)return;
   
-  if(touchCount===1&&dragType==='face'&&startPos){
+  if(touchCount===1&&dragType==='rotate'&&startPos&&selectedFace){
     const t=e.touches[0];
     const dx=t.clientX-startPos.x;
     const dy=t.clientY-startPos.y;
     const dist=Math.sqrt(dx*dx+dy*dy);
     
-    if(dist>20&&selectedFace){
-      const rot=getRotationFromDrag(selectedFace,startPos.x,startPos.y,t.clientX,t.clientY);
+    if(dist>15){
+      const rot=getRotation(selectedFace,startPos.x,startPos.y,t.clientX,t.clientY);
       if(rot&&!animating){
-        rotateFace(rot.face,rot.dir);
+        rotateFace(selectedFace,rot.dir);
         requestAnimationFrame(animStep);
-        dragType=null;startPos=null;selectedFace=null;
+        isDragging=false;startPos=null;selectedFace=null;
       }
     }
-  }else if(dragType==='camera'){
-    let cx,cy;
-    if(touchCount===1){
-      cx=e.touches[0].clientX;cy=e.touches[0].clientY;
-    }else{
-      const t1=e.touches[0],t2=e.touches[1];
-      cx=(t1.clientX+t2.clientX)/2;cy=(t1.clientY+t2.clientY)/2;
-    }
+  }else if(touchCount===2&&dragType==='camera'){
+    const t1=e.touches[0],t2=e.touches[1];
+    const cx=(t1.clientX+t2.clientX)/2;
+    const cy=(t1.clientY+t2.clientY)/2;
+    
     camRotY+=(cx-lastPos.x)*0.006;
     camRotX+=(cy-lastPos.y)*0.006;
     camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
@@ -521,10 +394,7 @@ canvas.addEventListener('touchmove',e=>{
 
 canvas.addEventListener('touchend',e=>{
   e.preventDefault();
-  if(dragType==='face'&&startPos&&selectedFace){
-    // 已经在touchmove中处理了
-  }
-  dragType=null;startPos=null;selectedFace=null;touchCount=0;
+  isDragging=false;dragType=null;startPos=null;selectedFace=null;touchCount=0;
   draw();
 },{passive:false});
 
