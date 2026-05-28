@@ -270,30 +270,27 @@ function rotateFace(face,dir){
   if(!startTime)startTimer();
 }
 
-let scrambleQueue=[]; // 打乱队列
-let scrambling=false; // 是否正在打乱中
+let scrambleQueue=[];
+let scrambleRemaining=0;
 
 function animStep(){
-  if(!animating)return; // 动画已结束，停止循环
+  if(!animating)return;
   
   const diff=animTarget-animAngle;
   if(abs(diff)<0.01){
-    // 动画完成
     animAngle=animTarget;
     animating=false;
     applyStateRotation();
     draw();
     
     if(scrambleQueue.length>0){
-      // 还有打乱动作，继续下一个
       const next=scrambleQueue.shift();
+      scrambleRemaining--;
       rotateFace(next.face,next.dir);
       requestAnimationFrame(animStep);
-    }else if(scrambling){
-      // 打乱完毕
-      scrambling=false;
+    }else if(scrambleRemaining>0){
+      scrambleRemaining=0;
     }else{
-      // 正常操作，检查通关
       checkSolved();
     }
     return;
@@ -432,17 +429,17 @@ document.addEventListener('keydown',e=>{
 });
 
 function scrambleCube(){
+  if(animating)return;
   const fs=['U','D','F','B','L','R'];
-  // 生成打乱序列
   scrambleQueue=[];
-  scrambling=true; // 标记正在打乱
+  scrambleRemaining=20;
   for(let i=0;i<20;i++){
     scrambleQueue.push({face:fs[Math.random()*6|0],dir:Math.random()>0.5?1:-1});
   }
   moveCount=0;document.getElementById('moves').textContent='0';
   resetTimer();
-  // 开始第一个打乱动作
   const first=scrambleQueue.shift();
+  scrambleRemaining--;
   rotateFace(first.face,first.dir);
   requestAnimationFrame(animStep);
 }
