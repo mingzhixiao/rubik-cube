@@ -261,17 +261,18 @@ function draw(){
   });
 }
 
-function rotateFace(face,dir){
+function rotateFace(face,dir,countMove){
   if(animating)return;
   const m={U:{a:'y',l:1},D:{a:'y',l:-1},R:{a:'x',l:1},L:{a:'x',l:-1},F:{a:'z',l:1},B:{a:'z',l:-1}};
   const{a,l}=m[face];
   animAxis=a;animLayer=l;animAngle=0;animTarget=dir*PI/2;animating=true;
-  moveCount++;document.getElementById('moves').textContent=moveCount;
-  if(!startTime)startTimer();
+  if(countMove!==false){
+    moveCount++;document.getElementById('moves').textContent=moveCount;
+    if(!startTime)startTimer();
+  }
 }
 
-let scrambleQueue=[];
-let scrambleRemaining=0;
+let isScrambling=false;
 
 function animStep(){
   if(!animating)return;
@@ -285,11 +286,12 @@ function animStep(){
     
     if(scrambleQueue.length>0){
       const next=scrambleQueue.shift();
-      scrambleRemaining--;
       rotateFace(next.face,next.dir);
-      requestAnimationFrame(animStep);
-    }else if(scrambleRemaining>0){
-      scrambleRemaining=0;
+    }else if(isScrambling){
+      isScrambling=false;
+      moveCount=0;
+      document.getElementById('moves').textContent='0';
+      resetTimer();
     }else{
       checkSolved();
     }
@@ -297,8 +299,6 @@ function animStep(){
   }
   
   animAngle+=diff*0.15;
-  draw();
-  requestAnimationFrame(animStep);
 }
 
 function applyStateRotation(){
@@ -352,7 +352,6 @@ canvas.addEventListener('mouseup',e=>{
       const rot=getRotation(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
       if(rot&&!animating){
         rotateFace(rot.face,rot.dir);
-        requestAnimationFrame(animStep);
       }
     }
   }
@@ -396,7 +395,6 @@ canvas.addEventListener('touchmove',e=>{
       const rot=getRotation(selectedFace,startPos.x,startPos.y,e.touches[0].clientX,e.touches[0].clientY);
       if(rot&&!animating){
         rotateFace(rot.face,rot.dir);
-        requestAnimationFrame(animStep);
         isDragging=false;startPos=null;selectedFace=null;
       }
     }
@@ -425,23 +423,19 @@ canvas.addEventListener('touchend',e=>{
 // 键盘
 document.addEventListener('keydown',e=>{
   const k=e.key.toUpperCase(),d=e.shiftKey?-1:1;
-  if('UDFBLR'.includes(k)){rotateFace(k,d);requestAnimationFrame(animStep)}
+  if('UDFBLR'.includes(k)){rotateFace(k,d)}
 });
 
 function scrambleCube(){
-  if(animating)return;
+  if(animating||isScrambling)return;
   const fs=['U','D','F','B','L','R'];
   scrambleQueue=[];
-  scrambleRemaining=20;
+  isScrambling=true;
   for(let i=0;i<20;i++){
     scrambleQueue.push({face:fs[Math.random()*6|0],dir:Math.random()>0.5?1:-1});
   }
-  moveCount=0;document.getElementById('moves').textContent='0';
-  resetTimer();
   const first=scrambleQueue.shift();
-  scrambleRemaining--;
-  rotateFace(first.face,first.dir);
-  requestAnimationFrame(animStep);
+  rotateFace(first.face,first.dir,false);
 }
 
 function resetCube(){
@@ -473,7 +467,7 @@ function stopTimer(){clearInterval(timerInterval)}
 function resetTimer(){stopTimer();startTime=null;document.getElementById('timer').textContent='00:00'}
 
 function loop(){
-  if(animating)animStep();
+  animStep();
   draw();
   requestAnimationFrame(loop);
 }
