@@ -271,6 +271,7 @@ function rotateFace(face,dir){
 }
 
 let scrambleQueue=[]; // 打乱队列
+let scrambling=false; // 是否正在打乱中
 
 function animStep(){
   const diff=animTarget-animAngle;
@@ -286,8 +287,11 @@ function animStep(){
         rotateFace(next.face,next.dir);
         requestAnimationFrame(animStep);
       },30);
+    }else if(scrambling){
+      // 打乱完毕，标记为非打乱状态
+      scrambling=false;
     }else{
-      // 打乱完毕才检查通关
+      // 正常操作才检查通关
       checkSolved();
     }
     return;
@@ -428,6 +432,7 @@ function scrambleCube(){
   const fs=['U','D','F','B','L','R'];
   // 生成打乱序列
   scrambleQueue=[];
+  scrambling=true; // 标记正在打乱
   for(let i=0;i<20;i++){
     scrambleQueue.push({face:fs[Math.random()*6|0],dir:Math.random()>0.5?1:-1});
   }
