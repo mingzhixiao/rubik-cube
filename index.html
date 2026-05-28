@@ -274,28 +274,31 @@ let scrambleQueue=[]; // 打乱队列
 let scrambling=false; // 是否正在打乱中
 
 function animStep(){
+  if(!animating)return; // 动画已结束，停止循环
+  
   const diff=animTarget-animAngle;
   if(abs(diff)<0.01){
+    // 动画完成
     animAngle=animTarget;
     animating=false;
     applyStateRotation();
     draw();
-    // 如果还有打乱队列，继续下一个
+    
     if(scrambleQueue.length>0){
+      // 还有打乱动作，继续下一个
       const next=scrambleQueue.shift();
-      setTimeout(()=>{
-        rotateFace(next.face,next.dir);
-        requestAnimationFrame(animStep);
-      },30);
+      rotateFace(next.face,next.dir);
+      requestAnimationFrame(animStep);
     }else if(scrambling){
-      // 打乱完毕，标记为非打乱状态
+      // 打乱完毕
       scrambling=false;
     }else{
-      // 正常操作才检查通关
+      // 正常操作，检查通关
       checkSolved();
     }
     return;
   }
+  
   animAngle+=diff*0.15;
   draw();
   requestAnimationFrame(animStep);
