@@ -314,26 +314,14 @@ function applyStateRotation(){
 }
 
 // 交互状态
-let isDragging=false,startPos=null,selectedFace=null;
-let touchCount=0;
-let cameraDragging=false,cameraStartPos=null,cameraLastPos=null;
+let cameraDragging=false,cameraLastPos=null;
 
-// 获取触摸/鼠标位置
-function getPos(e){
-  const rect=canvas.getBoundingClientRect();
-  if(e.touches){
-    return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top};
-  }
-  return{x:e.clientX-rect.left,y:e.clientY-rect.top};
-}
-
-// 智能选面：先精确hitTest，找不到则选最近的面
+// 智能选面：先精确hitTest，找不到则扩大半径搜索
 function smartHitTest(sx,sy){
   const f=hitTest(sx,sy);
   if(f)return f;
-  // 扩大搜索范围
-  for(let r=8;r<=40;r+=8){
-    for(let a=0;a<360;a+=45){
+  for(let r=10;r<=50;r+=10){
+    for(let a=0;a<360;a+=30){
       const rad=a*PI/180;
       const f2=hitTest(sx+cos(rad)*r,sy+sin(rad)*r);
       if(f2)return f2;
@@ -342,88 +330,72 @@ function smartHitTest(sx,sy){
   return null;
 }
 
-// 鼠标事件
-canvas.addEventListener('mousedown',e=>{
-  e.preventDefault();
-  if(e.button!==0)return;
+// 通用拖拽状态
+let dragStartCanvas=null; // canvas坐标
+let dragStartClient=null; // client坐标
+let dragFace=null;
+let dragTriggered=false;
+
+function canvasPos(e){
   const rect=canvas.getBoundingClientRect();
-  const cx=e.clientX-rect.left;
-  const cy=e.clientY-rect.top;
-  selectedFace=smartHitTest(cx,cy);
-  isDragging=true;
-  startPos={x:cx,y:cy};
-});
+  if(e.touches)return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top};
+  return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+}
+function clientPos(e){
+  if(e.touches)return{x:e.touches[0].clientX,y:e.touches[0].clientY};
+  return{x:e.clientX,y:e.clientY};
+}
 
-canvas.addEventListener('mousemove',e=>{
-  if(!isDragging||!startPos)return;
-  e.preventDefault();
-});
-
-canvas.addEventListener('mouseup',e=>{
-  if(isDragging&&startPos&&selectedFace){
-    const rect=canvas.getBoundingClientRect();
-    const cx=e.clientX-rect.left;
-    const cy=e.clientY-rect.top;
-    const dx=cx-startPos.x;
-    const dy=cy-startPos.y;
-    const dist=sqrt(dx*dx+dy*dy);
-    
-    if(dist>20){
-      const rot=getRotation(selectedFace,startPos.x,startPos.y,cx,cy);
-      if(rot&&!animating){
-        rotateFace(rot.face,rot.dir);
-      }
+function onDragStart(e){
+  const cp=canvasPos(e);
+  const clp=clientPos(e);
+  dragFace=smartHitTest(cp.x,cp.y);
+  dragStartCanvas={x:cp.x,y:cp.y};
+  dragStartClient={x:clp.x,y:clp.y};
+  dragTriggered=false;
+}
+function onDragMove(e){
+  if(!dragStartClient||!dragFace)return;
+  const clp=clientPos(e);
+  const dx=clp.x-dragStartClient.x;
+  const dy=clp.y-dragStartClient.y;
+  if(sqrt(dx*dx+dy*dy)>15&&!animating){
+    const rot=getRotation(dragFace,dragStartCanvas.x,dragStartCanvas.y,dragStartCanvas.x+dx,dragStartCanvas.y+dy);
+    if(rot){
+      rotateFace(rot.face,rot.dir);
+      dragTriggered=true;
+      dragFace=null;
     }
   }
-  isDragging=false;startPos=null;selectedFace=null;
-});
+}
+function onDragEnd(){
+  dragStartCanvas=null;dragStartClient=null;dragFace=null;dragTriggered=false;
+}
 
-canvas.addEventListener('mouseleave',()=>{
-  isDragging=false;startPos=null;selectedFace=null;
-});
-
+// 鼠标事件
+canvas.addEventListener('mousedown',e=>{e.preventDefault();if(e.button===0)onDragStart(e)});
+canvas.addEventListener('mousemove',e=>{if(dragStartClient)onDragMove(e)});
+canvas.addEventListener('mouseup',e=>{onDragEnd()});
+canvas.addEventListener('mouseleave',()=>{onDragEnd()});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
 // 触摸事件
 canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
-  touchCount=e.touches.length;
-  
-  if(touchCount===1){
-    const rect=canvas.getBoundingClientRect();
-    const cx=e.touches[0].clientX-rect.left;
-    const cy=e.touches[0].clientY-rect.top;
-    selectedFace=smartHitTest(cx,cy);
-    isDragging=true;
-    startPos={x:cx,y:cy};
-  }else if(touchCount===2){
-    isDragging=false;startPos=null;selectedFace=null;
+  if(e.touches.length===1){
+    onDragStart(e);
+  }else{
+    onDragEnd();
     cameraDragging=true;
     const t1=e.touches[0],t2=e.touches[1];
-    cameraStartPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
     cameraLastPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
   }
 },{passive:false});
-
 canvas.addEventListener('touchmove',e=>{
-  if(touchCount===1&&isDragging&&startPos&&selectedFace){
-    e.preventDefault();
-    const rect=canvas.getBoundingClientRect();
-    const cx=e.touches[0].clientX-rect.left;
-    const cy=e.touches[0].clientY-rect.top;
-    const dx=cx-startPos.x;
-    const dy=cy-startPos.y;
-    const dist=sqrt(dx*dx+dy*dy);
-    
-    if(dist>20){
-      const rot=getRotation(selectedFace,startPos.x,startPos.y,cx,cy);
-      if(rot&&!animating){
-        rotateFace(rot.face,rot.dir);
-        isDragging=false;startPos=null;selectedFace=null;
-      }
-    }
-  }else if(touchCount===2&&cameraDragging&&cameraLastPos){
-    e.preventDefault();
+  e.preventDefault();
+  if(e.touches.length===1&&dragStartClient){
+    onDragMove(e);
+  }else if(e.touches.length===2&&cameraDragging&&cameraLastPos){
     const t1=e.touches[0],t2=e.touches[1];
     const cx=(t1.clientX+t2.clientX)/2;
     const cy=(t1.clientY+t2.clientY)/2;
@@ -440,10 +412,9 @@ canvas.addEventListener('touchmove',e=>{
 
 canvas.addEventListener('touchend',e=>{
   e.preventDefault();
-  touchCount=e.touches.length;
-  if(touchCount===0){
-    isDragging=false;startPos=null;selectedFace=null;
-    cameraDragging=false;cameraStartPos=null;cameraLastPos=null;
+  if(e.touches.length===0){
+    onDragEnd();
+    cameraDragging=false;cameraLastPos=null;
   }
 },{passive:false});
 
