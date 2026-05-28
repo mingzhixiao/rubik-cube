@@ -270,6 +270,8 @@ function rotateFace(face,dir){
   if(!startTime)startTimer();
 }
 
+let scrambleQueue=[]; // 打乱队列
+
 function animStep(){
   const diff=animTarget-animAngle;
   if(abs(diff)<0.01){
@@ -277,7 +279,17 @@ function animStep(){
     animating=false;
     applyStateRotation();
     draw();
-    checkSolved();
+    // 如果还有打乱队列，继续下一个
+    if(scrambleQueue.length>0){
+      const next=scrambleQueue.shift();
+      setTimeout(()=>{
+        rotateFace(next.face,next.dir);
+        requestAnimationFrame(animStep);
+      },30);
+    }else{
+      // 打乱完毕才检查通关
+      checkSolved();
+    }
     return;
   }
   animAngle+=diff*0.15;
@@ -413,14 +425,18 @@ document.addEventListener('keydown',e=>{
 });
 
 function scrambleCube(){
-  const fs=['U','D','F','B','L','R'];let n=0;
-  function go(){
-    if(n>=20)return;
-    rotateFace(fs[Math.random()*6|0],Math.random()>0.5?1:-1);
-    n++;
-    setTimeout(()=>{animating=false;applyStateRotation();go()},60);
+  const fs=['U','D','F','B','L','R'];
+  // 生成打乱序列
+  scrambleQueue=[];
+  for(let i=0;i<20;i++){
+    scrambleQueue.push({face:fs[Math.random()*6|0],dir:Math.random()>0.5?1:-1});
   }
-  moveCount=0;document.getElementById('moves').textContent='0';resetTimer();go();
+  moveCount=0;document.getElementById('moves').textContent='0';
+  resetTimer();
+  // 开始第一个打乱动作
+  const first=scrambleQueue.shift();
+  rotateFace(first.face,first.dir);
+  requestAnimationFrame(animStep);
 }
 
 function resetCube(){
