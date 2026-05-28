@@ -326,15 +326,31 @@ function getPos(e){
   return{x:e.clientX-rect.left,y:e.clientY-rect.top};
 }
 
+// 智能选面：先精确hitTest，找不到则选最近的面
+function smartHitTest(sx,sy){
+  const f=hitTest(sx,sy);
+  if(f)return f;
+  // 扩大搜索范围
+  for(let r=8;r<=40;r+=8){
+    for(let a=0;a<360;a+=45){
+      const rad=a*PI/180;
+      const f2=hitTest(sx+cos(rad)*r,sy+sin(rad)*r);
+      if(f2)return f2;
+    }
+  }
+  return null;
+}
+
 // 鼠标事件
 canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
   if(e.button!==0)return;
-  
-  const pos=getPos(e);
-  selectedFace=hitTest(pos.x,pos.y);
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.clientX-rect.left;
+  const cy=e.clientY-rect.top;
+  selectedFace=smartHitTest(cx,cy);
   isDragging=true;
-  startPos={x:e.clientX,y:e.clientY};
+  startPos={x:cx,y:cy};
 });
 
 canvas.addEventListener('mousemove',e=>{
@@ -344,12 +360,15 @@ canvas.addEventListener('mousemove',e=>{
 
 canvas.addEventListener('mouseup',e=>{
   if(isDragging&&startPos&&selectedFace){
-    const dx=e.clientX-startPos.x;
-    const dy=e.clientY-startPos.y;
+    const rect=canvas.getBoundingClientRect();
+    const cx=e.clientX-rect.left;
+    const cy=e.clientY-rect.top;
+    const dx=cx-startPos.x;
+    const dy=cy-startPos.y;
     const dist=sqrt(dx*dx+dy*dy);
     
     if(dist>20){
-      const rot=getRotation(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
+      const rot=getRotation(selectedFace,startPos.x,startPos.y,cx,cy);
       if(rot&&!animating){
         rotateFace(rot.face,rot.dir);
       }
@@ -373,7 +392,7 @@ canvas.addEventListener('touchstart',e=>{
     const rect=canvas.getBoundingClientRect();
     const cx=e.touches[0].clientX-rect.left;
     const cy=e.touches[0].clientY-rect.top;
-    selectedFace=hitTest(cx,cy);
+    selectedFace=smartHitTest(cx,cy);
     isDragging=true;
     startPos={x:cx,y:cy};
   }else if(touchCount===2){
@@ -386,9 +405,8 @@ canvas.addEventListener('touchstart',e=>{
 },{passive:false});
 
 canvas.addEventListener('touchmove',e=>{
-  e.preventDefault();
-  
   if(touchCount===1&&isDragging&&startPos&&selectedFace){
+    e.preventDefault();
     const rect=canvas.getBoundingClientRect();
     const cx=e.touches[0].clientX-rect.left;
     const cy=e.touches[0].clientY-rect.top;
@@ -404,15 +422,18 @@ canvas.addEventListener('touchmove',e=>{
       }
     }
   }else if(touchCount===2&&cameraDragging&&cameraLastPos){
+    e.preventDefault();
     const t1=e.touches[0],t2=e.touches[1];
     const cx=(t1.clientX+t2.clientX)/2;
     const cy=(t1.clientY+t2.clientY)/2;
-    
-    camRotY+=(cx-cameraLastPos.x)*0.008;
-    camRotX+=(cy-cameraLastPos.y)*0.008;
-    camRotX=max(-PI/2,min(PI/2,camRotX));
-    cameraLastPos={x:cx,y:cy};
-    draw();
+    const ddx=cx-cameraLastPos.x;
+    const ddy=cy-cameraLastPos.y;
+    if(abs(ddx)>1||abs(ddy)>1){
+      camRotY+=ddx*0.008;
+      camRotX+=ddy*0.008;
+      camRotX=max(-PI/2,min(PI/2,camRotX));
+      cameraLastPos={x:cx,y:cy};
+    }
   }
 },{passive:false});
 
