@@ -10,91 +10,59 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;color:#f0f0f0;user-select:none;-webkit-user-select:none}
 body{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);display:flex;flex-direction:column}
-
 .header{display:flex;justify-content:space-between;align-items:center;padding:env(safe-area-inset-top) 16px 10px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(26,26,46,0.8);z-index:20;border-bottom:1px solid rgba(255,255,255,0.1)}
 .canvas-wrap{flex:1;position:relative;overflow:hidden}
-canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
-canvas:active{cursor:grabbing}
+canvas{display:block;width:100%;height:100%;touch-action:none}
 .footer{display:flex;justify-content:center;gap:12px;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(26,26,46,0.8);z-index:20;border-top:1px solid rgba(255,255,255,0.1)}
-
 .stat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:8px 14px;font-size:15px;font-weight:500}
 .stat .val{font-variant-numeric:tabular-nums;min-width:32px;text-align:right;font-weight:600}
-
 .btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 32px;border-radius:14px;cursor:pointer;font-size:15px;font-weight:600;letter-spacing:1px;transition:all .2s}
 .btn:active{transform:scale(0.95);background:rgba(255,255,255,0.15)}
 .btn.primary{background:linear-gradient(135deg,#e94560,#c23152);border-color:rgba(233,69,96,0.5);box-shadow:0 4px 16px rgba(233,69,96,0.3)}
-
-.hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:12px;pointer-events:none;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
-
+.hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:12px;pointer-events:none;white-space:nowrap}
 .win-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:100;padding:20px}
 .win-overlay.show{display:flex}
 .win-overlay .trophy{font-size:64px;margin-bottom:16px;animation:bounce 1s ease infinite}
 .win-overlay h2{font-size:36px;background:linear-gradient(135deg,#ffd700,#ff6b35);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;font-weight:800}
 .win-overlay p{color:rgba(255,255,255,0.7);font-size:18px;margin-bottom:28px}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-
 .particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .particle{position:absolute;width:4px;height:4px;background:rgba(233,69,96,0.3);border-radius:50%;animation:float linear infinite}
 @keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) scale(1);opacity:0}}
-
 @media(max-width:480px){
   .header{padding:env(safe-area-inset-top) 10px 6px}
   .stat{padding:6px 10px;font-size:13px;gap:6px;border-radius:10px}
   .footer{padding:8px 10px calc(env(safe-area-inset-bottom) + 8px);gap:8px}
   .btn{padding:10px 0;font-size:14px;border-radius:10px;flex:1;max-width:45vw}
   .hint{font-size:10px;bottom:6px}
-  .win-overlay h2{font-size:28px}
-  .win-overlay p{font-size:14px}
-  .trophy{font-size:48px!important}
-}
-@media(max-height:500px){
-  .header{padding:4px 10px 4px}
-  .stat{padding:4px 8px;font-size:12px}
-  .footer{padding:6px 10px 6px}
-  .btn{padding:8px 0;font-size:13px}
-  .hint{display:none}
-}
-@media(min-width:481px) and (max-width:1024px){
-  .btn{padding:14px 40px;font-size:16px}
-  .stat{padding:8px 16px;font-size:15px}
-}
-@media(min-width:1025px){
-  .btn{padding:14px 48px;font-size:16px}
-  .stat{padding:10px 18px;font-size:15px}
 }
 </style>
 </head>
 <body>
 <div class="particles" id="particles"></div>
-
 <div class="header">
   <div class="stat"><span>🎯</span><span>步数</span><span class="val" id="moves">0</span></div>
   <div class="stat"><span>⏱️</span><span class="val" id="timer">00:00</span></div>
 </div>
-
 <div class="canvas-wrap">
   <canvas id="c"></canvas>
-  <div class="hint">拖拽旋转面 · 双指旋转视角</div>
+  <div class="hint">单指拖拽旋转面 · 双指旋转视角</div>
 </div>
-
 <div class="footer">
   <button class="btn primary" onclick="scrambleCube()">🎲 打乱</button>
   <button class="btn" onclick="resetCube()">↺ 重置</button>
 </div>
-
 <div class="win-overlay" id="winOverlay">
   <div class="trophy">🏆</div>
   <h2>恭喜通关!</h2>
   <p id="winInfo"></p>
   <button class="btn primary" onclick="closeWin()">🎮 再来一次</button>
 </div>
-
 <script>
-(function(){const c=document.getElementById('particles');for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.animationDuration=(8+Math.random()*12)+'s';p.style.animationDelay=(-Math.random()*20)+'s';p.style.width=p.style.height=(2+Math.random()*3)+'px';c.appendChild(p)}})();
+(function(){const c=document.getElementById('particles');for(let i=0;i<15;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.animationDuration=(8+Math.random()*12)+'s';p.style.animationDelay=(-Math.random()*20)+'s';p.style.width=p.style.height=(2+Math.random()*3)+'px';c.appendChild(p)}})();
 
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 let W,H,dpr;
-
 function resize(){
   const wrap=canvas.parentElement;
   dpr=window.devicePixelRatio||1;
@@ -107,27 +75,29 @@ function resize(){
 resize();
 window.addEventListener('resize',resize);
 
-const PI=Math.PI;
+const PI=Math.PI,sin=Math.sin,cos=Math.cos,sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max;
 function vec3(x,y,z){return{x,y,z}}
 function add(a,b){return{x:a.x+b.x,y:a.y+b.y,z:a.z+b.z}}
 function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}
 function scale(v,s){return{x:v.x*s,y:v.y*s,z:v.z*s}}
 function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}
 function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}
-function len(v){return Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z)}
-function normalize(v){const l=len(v);return l>0?scale(v,1/l):{x:0,y:0,z:0}}
-function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x,v.y*c-v.z*s,v.y*s+v.z*c)}
-function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return vec3(v.x*c+v.z*s,v.y,-v.x*s+v.z*c)}
+function len(v){return sqrt(v.x*v.x+v.y*v.y+v.z*v.z)}
+function normalize(v){const l=len(v);return l>0.0001?scale(v,1/l):vec3(0,0,1)}
+
+function rotX(v,a){const c=cos(a),s=sin(a);return vec3(v.x,v.y*c-v.z*s,v.y*s+v.z*c)}
+function rotY(v,a){const c=cos(a),s=sin(a);return vec3(v.x*c+v.z*s,v.y,-v.x*s+v.z*c)}
+function rotZ(v,a){const c=cos(a),s=sin(a);return vec3(v.x*c-v.y*s,v.x*s+v.y*c,v.z)}
 
 function project(v){
-  const d=8,z=v.z+d,scale=d/z*Math.min(W,H)*0.22;
-  return{x:W/2+v.x*scale,y:H/2-v.y*scale,z:v.z,scale:scale}
+  const d=8,z=v.z+d,scale=d/z*min(W,H)*0.22;
+  return{x:W/2+v.x*scale,y:H/2-v.y*scale,z:v.z,scale}
 }
 
 const colorMap=['#ffffff','#ffd500','#ff2d55','#ff9500','#34c759','#007aff'];
 let cubeState=[],moveCount=0,startTime=null,timerInterval=null;
 let animating=false,animAxis='',animLayer=0,animAngle=0,animTarget=0;
-let camRotX=-0.3,camRotY=0.5;
+let camRotX=-0.4,camRotY=0.5;
 const FACE=['U','D','F','B','L','R'];
 
 function initState(){cubeState=[];for(let f=0;f<6;f++){cubeState[f]=[];for(let r=0;r<3;r++){cubeState[f][r]=[];for(let c=0;c<3;c++)cubeState[f][r][c]=f}}}
@@ -151,110 +121,106 @@ const cubies=buildCubies();
 
 function applyRot(v){return rotY(rotX(v,camRotX),camRotY)}
 function getColor(f,r,c){return colorMap[cubeState[FACE.indexOf(f)][r][c]]||'#1a1a2e'}
-function lighten(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${Math.min(255,r+p*2.55)|0},${Math.min(255,g+p*2.55)|0},${Math.min(255,b+p*2.55)|0})`}
-function darken(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${Math.max(0,r-p*2.55)|0},${Math.max(0,g-p*2.55)|0},${Math.max(0,b-p*2.55)|0})`}
+function lighten(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${min(255,r+p*2.55)|0},${min(255,g+p*2.55)|0},${min(255,b+p*2.55)|0})`}
+function darken(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${max(0,r-p*2.55)|0},${max(0,g-p*2.55)|0},${max(0,b-p*2.55)|0})`}
 
 function applyAnimRot(v){
   if(animAxis==='x'&&v.x===animLayer)return rotX(v,animAngle);
   if(animAxis==='y'&&v.y===animLayer)return rotY(v,animAngle);
+  if(animAxis==='z'&&v.z===animLayer)return rotZ(v,animAngle);
   return v;
 }
 
-// 射线与面片相交检测
-function rayIntersectFace(rayOrigin,rayDir,verts){
-  // 计算面的法向量
-  const v0=verts[0],v1=verts[1],v2=verts[2];
-  const edge1=sub(v1,v0),edge2=sub(v2,v0);
-  const normal=cross(edge1,edge2);
-  const nlen=len(normal);
-  if(nlen<0.001)return null;
-  const n=scale(normal,1/nlen);
+// 射线与四边形相交检测
+function rayQuadIntersect(rayO,rayD,verts){
+  // 计算两个三角形
+  const v0=verts[0],v1=verts[1],v2=verts[2],v3=verts[3];
   
-  // 射线与平面相交
-  const denom=dot(rayDir,n);
-  if(Math.abs(denom)<0.0001)return null;
-  
-  const t=dot(sub(v0,rayOrigin),n)/denom;
-  if(t<0)return null;
-  
-  const hit=add(rayOrigin,scale(rayDir,t));
-  
-  // 检查点是否在四边形内
-  const v0v1=sub(v1,v0),v0v2=sub(v2,v0),v0p=sub(hit,v0);
-  const d00=dot(v0v1,v0v1),d01=dot(v0v1,v0v2),d11=dot(v0v2,v0v2);
-  const d20=dot(v0p,v0v1),d21=dot(v0p,v0v2);
-  const denom2=d00*d11-d01*d01;
-  if(Math.abs(denom2)<0.0001)return null;
-  
-  const v=(d11*d20-d01*d21)/denom2;
-  const w=(d00*d21-d01*d20)/denom2;
-  const u=1-v-w;
-  
-  if(u>=0&&v>=0&&w>=0&&u<=1&&v<=1&&w<=1){
-    return{t,point:hit,normal:n};
+  function triIntersect(a,b,c){
+    const e1=sub(b,a),e2=sub(c,a);
+    const pvec=cross(rayD,e2);
+    const det=dot(e1,pvec);
+    if(abs(det)<0.0001)return null;
+    const invDet=1/det;
+    const tvec=sub(rayO,a);
+    const u=dot(tvec,pvec)*invDet;
+    if(u<0||u>1)return null;
+    const qvec=cross(tvec,e1);
+    const v=dot(rayD,qvec)*invDet;
+    if(v<0||u+v>1)return null;
+    const t=dot(e2,qvec)*invDet;
+    return t>0.001?t:null;
   }
-  return null;
-}
-
-// 屏幕坐标转射线
-function screenToRay(sx,sy){
-  const aspect=W/H;
-  const fov=0.5;
-  const x=(sx/W-0.5)*2*fov*aspect;
-  const y=-(sy/H-0.5)*2*fov;
-  const dir=normalize({x,y,z:1});
-  const rotatedDir=applyRot(dir);
-  return{origin:{x:0,y:0,z:0},dir:rotatedDir};
+  
+  const t1=triIntersect(v0,v1,v2);
+  const t2=triIntersect(v0,v2,v3);
+  
+  if(t1&&t2)return min(t1,t2);
+  return t1||t2;
 }
 
 // 检测点击了哪个面
 function hitTest(sx,sy){
-  const ray=screenToRay(sx,sy);
-  let bestT=Infinity,bestFace=null;
+  // 将屏幕坐标转换为射线
+  const nx=(sx/W-0.5)*2;
+  const ny=-(sy/H-0.5)*2;
+  const aspect=W/H;
+  const fov=0.6;
+  
+  // 射线方向（相机坐标系）
+  const dir=normalize(vec3(nx*aspect*fov,ny*fov,1));
+  // 应用相机旋转到世界坐标系
+  const worldDir=applyRot(dir);
+  const rayO=vec3(0,0,0);
+  
+  let bestT=1e9,bestFace=null;
   
   cubies.forEach(cu=>{
     cu.faces.forEach(f=>{
+      // 变换顶点到世界坐标系
       const worldVerts=f.v.map(v=>applyRot(animating?applyAnimRot(v):v));
-      const hit=rayIntersectFace(ray.origin,ray.dir,worldVerts);
-      if(hit&&hit.t<bestT){
-        bestT=hit.t;
+      const t=rayQuadIntersect(rayO,worldDir,worldVerts);
+      if(t&&t<bestT){
+        bestT=t;
         bestFace=f;
       }
     });
   });
   
-  return bestFace?bestFace.face:null;
+  return bestFace;
 }
 
-// 根据拖动方向和起始面确定旋转
+// 根据拖动方向确定旋转
 function getRotation(face,startX,startY,endX,endY){
   const dx=endX-startX;
   const dy=endY-startY;
-  const dist=Math.sqrt(dx*dx+dy*dy);
-  if(dist<15)return null;
+  const dist=sqrt(dx*dx+dy*dy);
+  if(dist<20)return null;
+  
+  const faceName=face.face;
+  const absDx=abs(dx),absDy=abs(dy);
   
   // 根据面和拖动方向确定旋转
-  switch(face){
-    case 'U':
-    case 'D':
-      // U/D 面：水平拖动旋转 y 轴
-      return{face:face,axis:'y',dir:dx>0?1:-1};
-    case 'F':
-    case 'B':
-      // F/B 面：水平拖动旋转 z 轴
-      return{face:face,axis:'z',dir:dx>0?1:-1};
-    case 'L':
-    case 'R':
-      // L/R 面：垂直拖动旋转 x 轴
-      return{face:face,axis:'x',dir:dy>0?1:-1};
+  if(faceName==='U'||faceName==='D'){
+    // U/D面：水平拖动旋转Y轴
+    // U面顺时针=从上面看顺时针，D面顺时针=从下面看顺时针
+    const dir=(faceName==='U')?(dx>0?1:-1):(dx>0?-1:1);
+    return{face:faceName,dir};
+  }else if(faceName==='F'||faceName==='B'){
+    // F/B面：水平拖动旋转Z轴
+    const dir=(faceName==='F')?(dx>0?1:-1):(dx>0?-1:1);
+    return{face:faceName,dir};
+  }else{
+    // L/R面：垂直拖动旋转X轴
+    const dir=(faceName==='R')?(dy>0?-1:1):(dy>0?1:-1);
+    return{face:faceName,dir};
   }
-  return null;
 }
 
 function draw(){
   ctx.clearRect(0,0,W,H);
   
-  const grd=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.7);
+  const grd=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,max(W,H)*0.7);
   grd.addColorStop(0,'rgba(233,69,96,0.08)');grd.addColorStop(0.5,'rgba(0,0,0,0)');grd.addColorStop(1,'rgba(0,0,0,0.2)');
   ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
 
@@ -267,7 +233,6 @@ function draw(){
 
   faces.forEach(({verts,color})=>{
     ctx.save();
-    
     ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
     
     ctx.beginPath();ctx.moveTo(verts[0].x,verts[0].y);for(let i=1;i<4;i++)ctx.lineTo(verts[i].x,verts[i].y);ctx.closePath();
@@ -299,15 +264,25 @@ function draw(){
 function rotateFace(face,dir){
   if(animating)return;
   const m={U:{a:'y',l:1},D:{a:'y',l:-1},R:{a:'x',l:1},L:{a:'x',l:-1},F:{a:'z',l:1},B:{a:'z',l:-1}};
-  const{a,l}=m[face];animAxis=a;animLayer=l;animAngle=0;animTarget=dir*PI/2;animating=true;
+  const{a,l}=m[face];
+  animAxis=a;animLayer=l;animAngle=0;animTarget=dir*PI/2;animating=true;
   moveCount++;document.getElementById('moves').textContent=moveCount;
   if(!startTime)startTimer();
 }
 
 function animStep(){
   const diff=animTarget-animAngle;
-  if(Math.abs(diff)<0.01){animAngle=animTarget;animating=false;applyStateRotation();draw();checkSolved();return}
-  animAngle+=diff*0.15;draw();requestAnimationFrame(animStep);
+  if(abs(diff)<0.01){
+    animAngle=animTarget;
+    animating=false;
+    applyStateRotation();
+    draw();
+    checkSolved();
+    return;
+  }
+  animAngle+=diff*0.15;
+  draw();
+  requestAnimationFrame(animStep);
 }
 
 function applyStateRotation(){
@@ -322,47 +297,42 @@ function applyStateRotation(){
 }
 
 // 交互状态
-let isDragging=false,dragType=null,startPos=null,lastPos=null;
-let selectedFace=null;
+let isDragging=false,startPos=null,selectedFace=null;
+let touchCount=0;
+let cameraDragging=false,cameraStartPos=null,cameraLastPos=null;
+
+// 获取触摸/鼠标位置
+function getPos(e){
+  const rect=canvas.getBoundingClientRect();
+  if(e.touches){
+    return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top};
+  }
+  return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+}
 
 // 鼠标事件
 canvas.addEventListener('mousedown',e=>{
   e.preventDefault();
-  if(e.button!==0)return; // 只响应左键
+  if(e.button!==0)return;
   
-  const rect=canvas.getBoundingClientRect();
-  const x=e.clientX-rect.left;
-  const y=e.clientY-rect.top;
-  
-  // 检测点击了哪个面
-  selectedFace=hitTest(x,y);
+  const pos=getPos(e);
+  selectedFace=hitTest(pos.x,pos.y);
   isDragging=true;
-  dragType='rotate';
   startPos={x:e.clientX,y:e.clientY};
-  lastPos={x:e.clientX,y:e.clientY};
 });
 
 canvas.addEventListener('mousemove',e=>{
-  if(!isDragging)return;
+  if(!isDragging||!startPos)return;
   e.preventDefault();
-  
-  // 如果是双指触摸，旋转视角
-  if(dragType==='camera'){
-    camRotY+=(e.clientX-lastPos.x)*0.006;
-    camRotX+=(e.clientY-lastPos.y)*0.006;
-    camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
-  }
-  lastPos={x:e.clientX,y:e.clientY};
-  draw();
 });
 
 canvas.addEventListener('mouseup',e=>{
-  if(isDragging&&dragType==='rotate'&&startPos&&selectedFace){
+  if(isDragging&&startPos&&selectedFace){
     const dx=e.clientX-startPos.x;
     const dy=e.clientY-startPos.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
+    const dist=sqrt(dx*dx+dy*dy);
     
-    if(dist>15){
+    if(dist>20){
       const rot=getRotation(selectedFace,startPos.x,startPos.y,e.clientX,e.clientY);
       if(rot&&!animating){
         rotateFace(rot.face,rot.dir);
@@ -370,97 +340,122 @@ canvas.addEventListener('mouseup',e=>{
       }
     }
   }
-  isDragging=false;dragType=null;startPos=null;selectedFace=null;
-  draw();
+  isDragging=false;startPos=null;selectedFace=null;
 });
 
-canvas.addEventListener('mouseleave',()=>{isDragging=false;dragType=null;startPos=null;selectedFace=null;draw()});
+canvas.addEventListener('mouseleave',()=>{
+  isDragging=false;startPos=null;selectedFace=null;
+});
+
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
 // 触摸事件
-let touchCount=0,lastTouches=null;
 canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   touchCount=e.touches.length;
   
   if(touchCount===1){
-    const t=e.touches[0];
-    const rect=canvas.getBoundingClientRect();
-    const x=t.clientX-rect.left;
-    const y=t.clientY-rect.top;
-    
-    selectedFace=hitTest(x,y);
+    const pos=getPos(e);
+    selectedFace=hitTest(pos.x,pos.y);
     isDragging=true;
-    dragType='rotate';
-    startPos={x:t.clientX,y:t.clientY};
-    lastPos={x:t.clientX,y:t.clientY};
+    startPos={x:e.touches[0].clientX,y:e.touches[0].clientY};
   }else if(touchCount===2){
-    // 双指开始：准备旋转视角
-    isDragging=true;
-    dragType='camera';
+    isDragging=false;startPos=null;selectedFace=null;
+    cameraDragging=true;
     const t1=e.touches[0],t2=e.touches[1];
-    startPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
-    lastPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
+    cameraStartPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
+    cameraLastPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
   }
-  draw();
 },{passive:false});
 
 canvas.addEventListener('touchmove',e=>{
   e.preventDefault();
-  if(!isDragging)return;
   
-  if(touchCount===1&&dragType==='rotate'&&startPos&&selectedFace){
-    const t=e.touches[0];
-    const dx=t.clientX-startPos.x;
-    const dy=t.clientY-startPos.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
+  if(touchCount===1&&isDragging&&startPos&&selectedFace){
+    const dx=e.touches[0].clientX-startPos.x;
+    const dy=e.touches[0].clientY-startPos.y;
+    const dist=sqrt(dx*dx+dy*dy);
     
-    if(dist>15){
-      const rot=getRotation(selectedFace,startPos.x,startPos.y,t.clientX,t.clientY);
+    if(dist>20){
+      const rot=getRotation(selectedFace,startPos.x,startPos.y,e.touches[0].clientX,e.touches[0].clientY);
       if(rot&&!animating){
         rotateFace(rot.face,rot.dir);
         requestAnimationFrame(animStep);
         isDragging=false;startPos=null;selectedFace=null;
       }
     }
-  }else if(touchCount===2&&dragType==='camera'){
+  }else if(touchCount===2&&cameraDragging&&cameraLastPos){
     const t1=e.touches[0],t2=e.touches[1];
     const cx=(t1.clientX+t2.clientX)/2;
     const cy=(t1.clientY+t2.clientY)/2;
     
-    camRotY+=(cx-lastPos.x)*0.006;
-    camRotX+=(cy-lastPos.y)*0.006;
-    camRotX=Math.max(-PI/2,Math.min(PI/2,camRotX));
-    lastPos={x:cx,y:cy};
+    camRotY+=(cx-cameraLastPos.x)*0.008;
+    camRotX+=(cy-cameraLastPos.y)*0.008;
+    camRotX=max(-PI/2,min(PI/2,camRotX));
+    cameraLastPos={x:cx,y:cy};
+    draw();
   }
-  draw();
 },{passive:false});
 
 canvas.addEventListener('touchend',e=>{
   e.preventDefault();
-  isDragging=false;dragType=null;startPos=null;selectedFace=null;touchCount=0;
-  draw();
+  touchCount=e.touches.length;
+  if(touchCount===0){
+    isDragging=false;startPos=null;selectedFace=null;
+    cameraDragging=false;cameraStartPos=null;cameraLastPos=null;
+  }
 },{passive:false});
 
 // 键盘
-document.addEventListener('keydown',e=>{const k=e.key.toUpperCase(),d=e.shiftKey?-1:1;if('UDFBLR'.includes(k)){rotateFace(k,d);requestAnimationFrame(animStep)}});
+document.addEventListener('keydown',e=>{
+  const k=e.key.toUpperCase(),d=e.shiftKey?-1:1;
+  if('UDFBLR'.includes(k)){rotateFace(k,d);requestAnimationFrame(animStep)}
+});
 
 function scrambleCube(){
   const fs=['U','D','F','B','L','R'];let n=0;
-  function go(){if(n>=20)return;rotateFace(fs[Math.random()*6|0],Math.random()>0.5?1:-1);n++;setTimeout(()=>{animating=false;applyStateRotation();go()},60)}
+  function go(){
+    if(n>=20)return;
+    rotateFace(fs[Math.random()*6|0],Math.random()>0.5?1:-1);
+    n++;
+    setTimeout(()=>{animating=false;applyStateRotation();go()},60);
+  }
   moveCount=0;document.getElementById('moves').textContent='0';resetTimer();go();
 }
-function resetCube(){initState();moveCount=0;document.getElementById('moves').textContent='0';resetTimer();draw()}
+
+function resetCube(){
+  initState();moveCount=0;
+  document.getElementById('moves').textContent='0';
+  resetTimer();draw();
+}
+
 function checkSolved(){
-  for(let f=0;f<6;f++){const v=cubeState[f][1][1];for(let r=0;r<3;r++)for(let c=0;c<3;c++)if(cubeState[f][r][c]!==v)return}
-  stopTimer();document.getElementById('winInfo').textContent=moveCount+' 步 · '+document.getElementById('timer').textContent;
+  for(let f=0;f<6;f++){
+    const v=cubeState[f][1][1];
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++)if(cubeState[f][r][c]!==v)return;
+  }
+  stopTimer();
+  document.getElementById('winInfo').textContent=moveCount+' 步 · '+document.getElementById('timer').textContent;
   document.getElementById('winOverlay').classList.add('show');
 }
+
 function closeWin(){document.getElementById('winOverlay').classList.remove('show');scrambleCube()}
-function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{const e=Math.floor((Date.now()-startTime)/1000);document.getElementById('timer').textContent=String(e/60|0).padStart(2,'0')+':'+String(e%60).padStart(2,'0')},1000)}
+
+function startTimer(){
+  startTime=Date.now();
+  timerInterval=setInterval(()=>{
+    const e=Math.floor((Date.now()-startTime)/1000);
+    document.getElementById('timer').textContent=String(e/60|0).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+  },1000);
+}
 function stopTimer(){clearInterval(timerInterval)}
 function resetTimer(){stopTimer();startTime=null;document.getElementById('timer').textContent='00:00'}
 
-function loop(){if(animating)animStep();draw();requestAnimationFrame(loop)}
+function loop(){
+  if(animating)animStep();
+  draw();
+  requestAnimationFrame(loop);
+}
 loop();
 </script>
 </body>
