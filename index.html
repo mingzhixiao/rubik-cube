@@ -314,109 +314,86 @@ function applyStateRotation(){
 }
 
 // 交互状态
-let cameraDragging=false,cameraLastPos=null;
+let dragSX=0,dragSY=0,dragCX=0,dragCY=0,dragFace=null,dragging=false;
+let camDrag=false,camLX=0,camLY=0;
 
-// 智能选面：先精确hitTest，找不到则扩大半径搜索
 function smartHitTest(sx,sy){
   const f=hitTest(sx,sy);
   if(f)return f;
-  for(let r=10;r<=50;r+=10){
-    for(let a=0;a<360;a+=30){
-      const rad=a*PI/180;
-      const f2=hitTest(sx+cos(rad)*r,sy+sin(rad)*r);
-      if(f2)return f2;
-    }
+  for(let r=10;r<=50;r+=10)for(let a=0;a<360;a+=30){
+    const f2=hitTest(sx+cos(a*PI/180)*r,sy+sin(a*PI/180)*r);
+    if(f2)return f2;
   }
   return null;
 }
 
-// 通用拖拽状态
-let dragStartCanvas=null; // canvas坐标
-let dragStartClient=null; // client坐标
-let dragFace=null;
-let dragTriggered=false;
-
-function canvasPos(e){
-  const rect=canvas.getBoundingClientRect();
-  if(e.touches)return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top};
-  return{x:e.clientX-rect.left,y:e.clientY-rect.top};
-}
-function clientPos(e){
-  if(e.touches)return{x:e.touches[0].clientX,y:e.touches[0].clientY};
-  return{x:e.clientX,y:e.clientY};
+function tryRotate(){
+  if(!dragFace||animating)return;
+  const dx=dragCX-dragSX,dy=dragCY-dragSY;
+  if(sqrt(dx*dx+dy*dy)<15)return;
+  const rot=getRotation(dragFace,dragSX,dragSY,dragSX+dx,dragSY+dy);
+  if(rot)rotateFace(rot.face,rot.dir);
+  dragFace=null;
 }
 
-function onDragStart(e){
-  const cp=canvasPos(e);
-  const clp=clientPos(e);
-  dragFace=smartHitTest(cp.x,cp.y);
-  dragStartCanvas={x:cp.x,y:cp.y};
-  dragStartClient={x:clp.x,y:clp.y};
-  dragTriggered=false;
-}
-function onDragMove(e){
-  if(!dragStartClient||!dragFace)return;
-  const clp=clientPos(e);
-  const dx=clp.x-dragStartClient.x;
-  const dy=clp.y-dragStartClient.y;
-  if(sqrt(dx*dx+dy*dy)>15&&!animating){
-    const rot=getRotation(dragFace,dragStartCanvas.x,dragStartCanvas.y,dragStartCanvas.x+dx,dragStartCanvas.y+dy);
-    if(rot){
-      rotateFace(rot.face,rot.dir);
-      dragTriggered=true;
-      dragFace=null;
-    }
-  }
-}
-function onDragEnd(){
-  dragStartCanvas=null;dragStartClient=null;dragFace=null;dragTriggered=false;
-}
-
-// 鼠标事件
-canvas.addEventListener('mousedown',e=>{e.preventDefault();if(e.button===0)onDragStart(e)});
-canvas.addEventListener('mousemove',e=>{if(dragStartClient)onDragMove(e)});
-canvas.addEventListener('mouseup',e=>{onDragEnd()});
-canvas.addEventListener('mouseleave',()=>{onDragEnd()});
-canvas.addEventListener('contextmenu',e=>e.preventDefault());
-
-// 触摸事件
-canvas.addEventListener('touchstart',e=>{
+// 触摸事件 — 最高优先级
+canvas.addEventListener('touchstart',function(e){
   e.preventDefault();
   if(e.touches.length===1){
-    onDragStart(e);
-  }else{
-    onDragEnd();
-    cameraDragging=true;
-    const t1=e.touches[0],t2=e.touches[1];
-    cameraLastPos={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
+    const t=e.touches[0],r=canvas.getBoundingClientRect();
+    dragSX=t.clientX-r.left; dragSY=t.clientY-r.top;
+    dragCX=dragSX; dragCY=dragSY;
+    dragFace=smartHitTest(dragSX,dragSY);
+    dragging=true;
+  }else if(e.touches.length===2){
+    dragging=false; dragFace=null;
+    camDrag=true;
+    camLX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    camLY=(e.touches[0].clientY+e.touches[1].clientY)/2;
   }
 },{passive:false});
-canvas.addEventListener('touchmove',e=>{
+
+canvas.addEventListener('touchmove',function(e){
   e.preventDefault();
-  if(e.touches.length===1&&dragStartClient){
-    onDragMove(e);
-  }else if(e.touches.length===2&&cameraDragging&&cameraLastPos){
-    const t1=e.touches[0],t2=e.touches[1];
-    const cx=(t1.clientX+t2.clientX)/2;
-    const cy=(t1.clientY+t2.clientY)/2;
-    const ddx=cx-cameraLastPos.x;
-    const ddy=cy-cameraLastPos.y;
-    if(abs(ddx)>1||abs(ddy)>1){
-      camRotY+=ddx*0.008;
-      camRotX+=ddy*0.008;
+  if(e.touches.length===1&&dragging){
+    const t=e.touches[0],r=canvas.getBoundingClientRect();
+    dragCX=t.clientX-r.left; dragCY=t.clientY-r.top;
+    tryRotate();
+  }else if(e.touches.length===2&&camDrag){
+    const nx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    const ny=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    if(abs(nx-camLX)>1||abs(ny-camLY)>1){
+      camRotY+=(nx-camLX)*0.008;
+      camRotX+=(ny-camLY)*0.008;
       camRotX=max(-PI/2,min(PI/2,camRotX));
-      cameraLastPos={x:cx,y:cy};
+      camLX=nx; camLY=ny;
     }
   }
 },{passive:false});
 
-canvas.addEventListener('touchend',e=>{
+canvas.addEventListener('touchend',function(e){
   e.preventDefault();
-  if(e.touches.length===0){
-    onDragEnd();
-    cameraDragging=false;cameraLastPos=null;
-  }
-},{passive:false});
+  if(e.touches.length===0){dragging=false;dragFace=null;camDrag=false;}
+});
+
+// 鼠标事件
+canvas.addEventListener('mousedown',function(e){
+  if(e.button!==0)return;
+  const r=canvas.getBoundingClientRect();
+  dragSX=e.clientX-r.left; dragSY=e.clientY-r.top;
+  dragCX=dragSX; dragCY=dragSY;
+  dragFace=smartHitTest(dragSX,dragSY);
+  dragging=true;
+});
+canvas.addEventListener('mousemove',function(e){
+  if(!dragging)return;
+  const r=canvas.getBoundingClientRect();
+  dragCX=e.clientX-r.left; dragCY=e.clientY-r.top;
+  tryRotate();
+});
+canvas.addEventListener('mouseup',function(){dragging=false;dragFace=null;});
+canvas.addEventListener('mouseleave',function(){dragging=false;dragFace=null;});
+canvas.addEventListener('contextmenu',function(e){e.preventDefault();});
 
 // 键盘
 document.addEventListener('keydown',e=>{
